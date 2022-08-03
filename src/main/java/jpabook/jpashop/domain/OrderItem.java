@@ -8,21 +8,23 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "order_item")
-@Getter @Setter
+@Getter
+@Setter
 public class OrderItem {
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     @Column(name = "order_item_id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_ID")
     private Item item;
 
-    @ManyToOne
+    @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
 
-    
+
     private int orderPrice; //주문 가격
     private int count; //주문 수량
 
