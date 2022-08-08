@@ -18,7 +18,15 @@ public class ItemService {
     public void saveItem (Item item){
         itemRepository.save(item);
     }
-
+    /**
+        영속성 컨텍스트가 자동변경
+     */
+    @Transactional
+    public void updateItem(UpdateBookDTO updateBookDTO){
+        Item item = itemRepository.findOne(updateBookDTO.getId());
+        item.setName(updateBookDTO.getName());
+        item.setPrice(updateBookDTO.getPrice());
+    }
     public List<Item> findItems(){
         return itemRepository.findAll();
     }
