@@ -30,7 +30,7 @@ public class MemberService {
     private void validateDuplicateMember(Member member) {
         //Member 테이블의 name을 유니크로 걸어놓는게 가장좋다. 동시에 같은이름을 등록하는경우 등록 되기 때문에
         List<Member> findMembers = memberRepository.findByName(member.getName());
-        if(!findMembers.isEmpty()){
+        if (!findMembers.isEmpty()) {
             throw new IllegalStateException("이미 존재하는 이름입니다.");
         }
     }
@@ -38,7 +38,7 @@ public class MemberService {
     /**
      * 회원 전체 조회
      */
-    public List<Member> findMembers(){
+    public List<Member> findMembers() {
         return memberRepository.findAll();
     }
 
@@ -46,7 +46,13 @@ public class MemberService {
     /**
      * 회원 단건 조회
      */
-    public Member findOne(Long memberId){
+    public Member findOne(Long memberId) {
         return memberRepository.findOne(memberId);
+    }
+
+    @Transactional
+    public void update(Long id, String name) {
+        Member member = memberRepository.findOne(id);
+        member.setName(name);
     }
 }
