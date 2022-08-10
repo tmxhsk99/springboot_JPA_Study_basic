@@ -1,15 +1,19 @@
 package jpabook.jpashop.api;
 
+import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.Order;
+import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
-import jpabook.jpashop.service.MemberService;
-import jpabook.jpashop.service.OrderService;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * xToOne(ManyToOne,OneToOne) 관계 최적화
@@ -36,5 +40,54 @@ public class OrderSimpleApiController {
             order.getDelivery().getAddress(); //Lazy 강제 초기화
         }
         return all;
+    }
+
+    /**
+     * V2. 엔티티를 조회해서 DTO로 변환 (fetch join 사용 x)
+     * - 단점 : 지연로딩으로 쿼리 N번 호출
+     *
+     * @return
+     */
+    @GetMapping("/api/v2/simple-orders")
+    public Result ordersV2() {
+        List<Order> orders = orderRepository.findAllByString(new OrderSearch());
+        List<SimpleOrderDto> collect = orders.stream()
+                .map(o -> new SimpleOrderDto(o))
+                .collect(Collectors.toList());
+
+        return new Result(collect);
+    }
+
+    /**
+     * V3. 엔티티를 조회해서 DTO로 변환 (fetch join O)
+     * - fetch join으로 쿼리 1번 호출
+     * 참조 : fetch join은 중요함
+     * @return
+     */
+    @GetMapping("/api/v3/simple-orders")
+        public Result ordersV3() {
+            List<Order> orders = orderRepository.findAllWithMemberDelivery();
+            List<SimpleOrderDto> collect = orders.stream()
+                    .map(o -> new SimpleOrderDto(o))
+                    .collect(Collectors.toList());
+
+            return new Result(collect);
+        }
+
+    @Data
+    private class SimpleOrderDto {
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate; //주문 시간
+        private OrderStatus orderStatus;
+        private Address address;
+
+        public SimpleOrderDto(Order order) {
+            orderId = order.getId();
+            name = order.getMember().getName();
+            orderDate = order.getOrderDate();
+            orderStatus = order.getStatus();
+            address = order.getDelivery().getAddress();
+        }
     }
 }
