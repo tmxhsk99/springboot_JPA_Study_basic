@@ -5,6 +5,8 @@ import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.order.simplequery.OrderSimpleQueryDto;
+import jpabook.jpashop.repository.order.simplequery.OrderSimpleRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderSimpleApiController {
     private final OrderRepository orderRepository;
-
+    private final OrderSimpleRepository orderSimpleRepository;
     /**
      * V1. 엔티티 직접 노출
      * - Heibername5Module 등록 , LAZY = null  처리
@@ -51,8 +53,8 @@ public class OrderSimpleApiController {
     @GetMapping("/api/v2/simple-orders")
     public Result ordersV2() {
         List<Order> orders = orderRepository.findAllByString(new OrderSearch());
-        List<SimpleOrderDto> collect = orders.stream()
-                .map(o -> new SimpleOrderDto(o))
+        List<OrderSimpleQueryDto> collect = orders.stream()
+                .map(o -> new OrderSimpleQueryDto(o))
                 .collect(Collectors.toList());
 
         return new Result(collect);
@@ -67,27 +69,22 @@ public class OrderSimpleApiController {
     @GetMapping("/api/v3/simple-orders")
         public Result ordersV3() {
             List<Order> orders = orderRepository.findAllWithMemberDelivery();
-            List<SimpleOrderDto> collect = orders.stream()
-                    .map(o -> new SimpleOrderDto(o))
+            List<OrderSimpleQueryDto> collect = orders.stream()
+                    .map(o -> new OrderSimpleQueryDto(o))
                     .collect(Collectors.toList());
 
             return new Result(collect);
         }
 
-    @Data
-    private class SimpleOrderDto {
-        private Long orderId;
-        private String name;
-        private LocalDateTime orderDate; //주문 시간
-        private OrderStatus orderStatus;
-        private Address address;
-
-        public SimpleOrderDto(Order order) {
-            orderId = order.getId();
-            name = order.getMember().getName();
-            orderDate = order.getOrderDate();
-            orderStatus = order.getStatus();
-            address = order.getDelivery().getAddress();
+    /**
+     * V4. 엔티티를 조회해서 DTO로 변환 (fetch join O)
+     * - fetch join으로 쿼리 1번 호출
+     * - select 절에서 원하는 데이터만 선택 조회
+     * @return
+     */
+    @GetMapping("/api/v4/simple-orders")
+        public Result ordersV4() {
+        List<OrderSimpleQueryDto> orderDtos = orderSimpleRepository.findOrderDtos();
+            return new Result(orderDtos);
         }
-    }
 }
