@@ -67,22 +67,39 @@ public class OrderQueryRepository {
         List<OrderQueryDto> result = findOrders();
 
         //orderItem 컬렉션을 Map 한방에 조회
-        Map<Long,List<OrderItemQueryDto>> orderItemMap =
+        Map<Long, List<OrderItemQueryDto>> orderItemMap =
                 findOrderItemMap(toOrderIds(result));
 
         //루프를 돌면서 컬렉션 추가 (추가 쿼리 실행 X)
-        result.forEach(o->o.setOrderItems(orderItemMap.get(o.getOrderId())));
+        result.forEach(o -> o.setOrderItems(orderItemMap.get(o.getOrderId())));
 
         return result;
     }
 
+    /**
+     * 최적화 2
+     * Query : 1번
+     * 필요한 모든 테이블을 조인해서 반환한다. 대신에 어플리케이션 단에서 파싱 처리를 해야한다.
+     */
+    public List<OrderFlatDto> findAllByDto_flat() {
+        return em.createQuery(
+                        "select new" +
+                        " jpabook.jpashop.repository.order.query.OrderFlatDto(o.id, m.name, o.orderDate, o.status, d.address, i.name, oi.orderPrice, oi.count)" +
+                        " from Order o" +
+                                " join o.member m" +
+                                " join o.delivery d" +
+                                " join o.orderItems oi" +
+                                " join oi.item i", OrderFlatDto.class)
+                .getResultList();
+    }
+
     private Map<Long, List<OrderItemQueryDto>> findOrderItemMap(List<Long> orderIds) {
         List<OrderItemQueryDto> orderItems = em.createQuery("select new" +
-                " jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id, i.name, oi.orderPrice, oi.count)" +
-                " from OrderItem oi" +
-                " join oi.item i" +
-                " where oi.order.id in :orderIds", OrderItemQueryDto.class)
-                .setParameter("orderIds",orderIds)
+                        " jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id, i.name, oi.orderPrice, oi.count)" +
+                        " from OrderItem oi" +
+                        " join oi.item i" +
+                        " where oi.order.id in :orderIds", OrderItemQueryDto.class)
+                .setParameter("orderIds", orderIds)
                 .getResultList();
 
         return orderItems.stream().collect(Collectors.groupingBy(OrderItemQueryDto::getOrderId));
