@@ -18,7 +18,11 @@ public class OrderQueryDto {
     private Address address;
     private List<OrderItemQueryDto> orderItems;
 
-    public OrderQueryDto(Long orderId, String name, LocalDateTime orderDate,OrderStatus orderStatus, Address address) {
+    public void setOrderItems(List<OrderItemQueryDto> orderItems) {
+        this.orderItems = orderItems;
+    }
+
+    public OrderQueryDto(Long orderId, String name, LocalDateTime orderDate, OrderStatus orderStatus, Address address) {
         this.orderId = orderId;
         this.name = name;
         this.orderStatus = orderStatus;
